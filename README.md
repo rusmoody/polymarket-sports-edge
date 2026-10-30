@@ -5,13 +5,17 @@ Built end-to-end: data collection from public APIs, backtests on *executable* pr
 with Telegram alerts.
 
 **Short version of the findings:** in-play sports markets on Polymarket are efficient. Betting on comebacks
-loses money in NBA, NHL, soccer and tennis; leaders are priced fairly. The one surviving candidate —
-*a tennis underdog who wins the first set* — is being forward-tested. Full tables: [`results/RESULTS.md`](results/RESULTS.md).
+loses money in NBA, NHL and tennis; leaders are priced about right. The one surviving candidate —
+*a tennis underdog who wins the first set* — is being forward-tested.
+
+📊 **Full research report with charts: [`RESEARCH.md`](RESEARCH.md)** · quick tables: [`results/RESULTS.md`](results/RESULTS.md)
+
+![Comebacks vs leaders](results/img/comeback_vs_leader.png)
 
 ## Why this project is interesting
 
 - **Honest methodology.** Started from a hypothesis (NBA halftime comebacks are under-priced), tested it, and it
-  failed on real data. Caught a data artifact (mid-prices of empty order books) that produced a fake +14% edge.
+  failed on real data. Caught a data artifact (mid-prices of empty order books) that produced a fake +13% edge.
 - **Real execution prices.** Backtests use VWAP of actual taker buys from the Polymarket trades API, not quotes.
 - **Correlation-aware stats.** Bootstrap confidence intervals resampled by game; one-bet-per-game checks.
 - **~7 400 games** across 4 sports, matched to play-by-play from ESPN to know the exact game state.
@@ -29,6 +33,8 @@ research/
   polymarket_nba/        NBA: game state from ESPN + real Polymarket trades at halftime
   multisport/            NHL, soccer (6 leagues), tennis (big tournaments)
 results/RESULTS.md       all result tables
+results/make_charts.py   builds the charts in results/img/
+RESEARCH.md              full research report
 ```
 
 ## Bot

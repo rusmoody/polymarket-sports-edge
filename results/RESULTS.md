@@ -6,7 +6,7 @@ fee of `0.05 · p · (1 − p)` per share. Intervals are 95% bootstrap CIs resam
 (bets inside one game are correlated). ✅ / ❌ = interval entirely above / below zero.
 
 > Lesson learned early: `prices-history` on illiquid in-play markets returns the *midpoint of an empty
-> book*. A first pass on those prices showed a fake +14% edge on NBA spreads; it vanished on real trades.
+> book*. A first pass on those prices showed a fake +13% edge on NBA spreads; it vanished on real trades.
 
 ## NBA — halftime (1 311 games, 2025-26 + start of 2026-27)
 
