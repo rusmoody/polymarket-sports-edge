@@ -1,0 +1,14 @@
+[Unit]
+Description=Polymarket sports in-play bot (NBA + tennis)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/root/pm_bot
+ExecStart=/root/pm_bot/venv/bin/python bot.py run
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
