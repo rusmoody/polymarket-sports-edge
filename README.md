@@ -39,16 +39,19 @@ RESEARCH.md              full research report
 
 ## Bot
 
-- Polls ESPN live scores (NBA) and Polymarket markets (tennis).
-- **NBA:** at halftime, if a pre-game-even/favourite team trails by 10–19, compares the order-book ask
-  (+ fee) with a conservative historical probability (point estimate − 1 SE); bets only with edge ≥ 3 pp.
-- **Tennis:** when the "Set 1 Winner" market reaches 0.97 and the winner was a pre-match underdog (< 40%),
-  buys that player's match moneyline within 4 minutes.
-- Fixed 5% of bankroll per bet, Polymarket min order size, liquidity cap at best ask,
-  +25% take-profit, daily bet limits and stop-loss.
+- **Tennis (active):** when the *"Set 1 Winner"* market reaches 0.97 and the winner was a pre-match underdog
+  (< 40% on Polymarket), the bot buys that player's match moneyline within 4 minutes (price 0.30–0.85).
+  ATP + WTA; Slams/1000 (backtested), 500 and 250 (not backtested, tracked as separate segments).
+  Challengers, ITF, qualifiers and doubles are excluded.
+- **NBA (off by default):** halftime comeback logic is kept in the code, but the backtest on real trades rejected it
+  (`NBA_ENABLED=0`).
+- Fixed 5% of bankroll per bet, Polymarket min order size, liquidity cap at best ask, take-profit (separate setting
+  for tennis), daily bet limits and stop-loss.
 - Settles NBA by ESPN final score and tennis by Polymarket market resolution; logs both "with TP" and
   "hold to end" PnL so the take-profit rule can be evaluated.
-- Paper mode by default (`LIVE=0`). SQLite journal, Telegram notifications, `python bot.py report`.
+- Paper mode by default (`LIVE=0`). SQLite journal, `python bot.py report`.
+- **Telegram:** private alerts for the operator + a public paper channel (English) with every signal,
+  take-profit exit, final result and a daily report. Live channel: [t.me/polybot_paper](https://t.me/polybot_paper).
 
 ```bash
 cd bot

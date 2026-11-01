@@ -54,8 +54,10 @@ MAX_BETS_PER_DAY = env("MAX_BETS_PER_DAY", 4, int)
 MAX_DAILY_LOSS = env("MAX_DAILY_LOSS", 30.0, float)
 FEE_RATE = env("FEE_RATE", 0.05, float)              # fee = rate*p*(1-p) за акцию, берём с запасом
 POLL_SEC = env("POLL_SEC", 20, int)
+NBA_ENABLED = env("NBA_ENABLED", 1, int) == 1      # 0 = не брать новые НБА-сигналы (открытые ставки всё равно досчитаются)
 TP_ENABLED = env("TP_ENABLED", 1, int) == 1        # тейк-профит
 TP_PCT = env("TP_PCT", 0.25, float)                # продать, когда чистый плюс >= 25% от вложенного
+TENNIS_TP_PCT = env("TENNIS_TP_PCT", 0.25, float)  # тейк-профит для тенниса отдельно (0 = держать до конца матча)
 
 # Теннис: андердог (<40% до матча) взял 1-й сет -> покупаем его победу в матче
 TENNIS_ENABLED = env("TENNIS_ENABLED", 1, int) == 1
@@ -68,19 +70,49 @@ TENNIS_MAX_DELAY_MIN = env("TENNIS_MAX_DELAY_MIN", 4, int)   # входим то
 TENNIS_SET_DONE = env("TENNIS_SET_DONE", 0.97, float)        # 1-й сет считаем решённым, когда его рынок >= 0.97
 TENNIS_BIG_ONLY = env("TENNIS_BIG_ONLY", 1, int) == 1  # только крупные турниры (как в бэктесте)
 TENNIS_INCLUDE_500 = env("TENNIS_INCLUDE_500", 1, int) == 1  # плюс турниры категории 500 (ATP/WTA)
+TENNIS_INCLUDE_250 = env("TENNIS_INCLUDE_250", 1, int) == 1  # плюс турниры категории 250 (ATP/WTA), отдельная строка в отчёте
 TENNIS_SERIES = (10365, 10366)                        # ATP, WTA
 TENNIS_BIG = ["Australian Open", "Roland Garros", "French Open", "Wimbledon", "US Open", "Indian Wells",
               "BNP Paribas Open", "Miami Open", "Monte-Carlo", "Monte Carlo", "Madrid", "Internazionali",
               "Italian Open", "National Bank Open", "Canadian Open", "Cincinnati", "Shanghai", "Paris Masters",
               "Rolex Paris", "China Open", "Wuhan", "Dubai", "Qatar", "Finals"]
 # Турниры категории 500 (ATP и WTA). На них бэктеста не было — в отчёте идут отдельной строкой.
-TENNIS_500 = ["Rotterdam", "ABN AMRO", "Rio Open", "Acapulco", "Abierto Mexicano", "Barcelona", "Queen's",
-              "Queens", "HSBC Championships", "cinch", "Halle", "Terra Wortmann", "Hamburg", "Washington",
-              "Citi Open", "DC Open", "Japan Open Tennis", "Kinoshita", "Erste Bank", "Vienna", "Swiss Indoors",
-              "Basel", "Adelaide", "Brisbane", "Abu Dhabi", "Linz", "Charleston", "Stuttgart", "Porsche",
-              "Strasbourg", "Berlin", "Bad Homburg", "Eastbourne", "Monterrey", "Korea Open", "Seoul",
-              "Pan Pacific", "Toray", "Ningbo", "Merida", "San Diego", "Zhengzhou", "Dallas", "Mubadala"]
+# Списки раздельные: одно и то же название города у мужчин и женщин бывает разной категории
+# (например, Нинбо — WTA 500, но у мужчин там Челленджер).
+TENNIS_500 = {
+    10365: ["Rotterdam", "ABN AMRO", "Rio Open", "Acapulco", "Abierto Mexicano", "Barcelona", "Queen's", "Queens",
+            "cinch", "Halle", "Terra Wortmann", "Hamburg", "Washington", "Citi Open", "DC Open", "Mubadala",
+            "Japan Open Tennis", "Kinoshita", "Erste Bank", "Vienna", "Swiss Indoors", "Basel", "Dallas",
+            "BMW Open", "Munich"],
+    10366: ["Adelaide", "Brisbane", "Abu Dhabi", "Linz", "Charleston", "Stuttgart", "Porsche", "Strasbourg",
+            "Berlin", "Bad Homburg", "Eastbourne", "Queen's", "Queens", "HSBC Championships", "Washington",
+            "Citi Open", "DC Open", "Mubadala", "Monterrey", "Korea Open", "Seoul", "Pan Pacific", "Toray",
+            "Ningbo", "Merida", "San Diego", "Zhengzhou"],
+}
+# Турниры категории 250. Список положительный (а не «всё остальное»), потому что Челленджеры
+# на Polymarket лежат в той же серии ATP и в названии слова «Challenger» часто нет.
+TENNIS_250 = {
+    10365: ["Brisbane International", "Hong Kong Tennis Open", "Adelaide International", "ASB Classic",
+            "Open Occitanie", "Montpellier", "Delray Beach", "Open 13", "Marseille", "Argentina Open",
+            "Chile Open", "Los Cabos", "Mexican Open", "U.S. Men's Clay Court", "Houston", "Hassan II",
+            "Marrakech", "Tiriac", "Bucharest", "Geneva", "Gonet Geneva", "BOSS Open", "Stuttgart",
+            "Libema", "Hertogenbosch", "Mallorca", "Eastbourne", "Nordea Open", "Bastad", "Swiss Open",
+            "Gstaad", "Generali Open", "Kitzbuhel", "Croatia Open", "Umag", "Atlanta Open", "Winston-Salem",
+            "Chengdu Open", "Hangzhou Open", "Almaty Open", "Nordic Open", "Stockholm", "European Open",
+            "Antwerp", "Open de Moselle", "Metz", "Hellenic Championship", "Athens", "Belgrade Open"],
+    10366: ["ASB Classic", "Hobart International", "Thailand Open", "Hua Hin", "Transylvania Open",
+            "ATX Open", "Austin", "Copa Colsanitas", "Bogota", "Rouen", "Morocco Open", "Rabat",
+            "Libema", "Hertogenbosch", "Nottingham", "Rothesay", "Birmingham", "Iasi", "Palermo",
+            "Hamburg", "Prague", "Livesport Prague", "Tennis in the Land", "Cleveland", "Jasmin Open",
+            "Monastir", "Guadalajara", "Prudential Hong Kong", "Japan Women's Open", "Osaka",
+            "Jiangxi Open", "Guangzhou Open", "Chennai Open", "Singapore Tennis Open", "Kaohsiung"],
+}
+TENNIS_EXCLUDE = ("Qualification", "Juniors", "Doubles", "Challenger", "ITF", "UTR", "Exhibition", " 125")
 TG_TOKEN, TG_CHAT = env("TG_BOT_TOKEN", ""), env("TG_CHAT_ID", "")
+# Публичный канал: сюда идут сигналы и итоги в формате «для людей» (бот должен быть админом канала)
+TG_CHANNEL = env("TG_CHANNEL_ID", "")                 # @username канала или -100… id
+CHANNEL_SUMMARY_HOUR = env("CHANNEL_SUMMARY_HOUR", 7, int)   # час (UTC) ежедневной сводки, 7 = 10:00 МСК
+CHANNEL_ENTRY_SLACK = env("CHANNEL_ENTRY_SLACK", 0.03, float)  # «вход не дороже» = цена бота + запас
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(HERE, "bets.db")
@@ -106,6 +138,16 @@ def tg(msg):
                    json={"chat_id": TG_CHAT, "text": msg}, timeout=10)
         except Exception as e:
             log(f"TG error: {e}")
+
+
+def channel(msg):
+    """Сообщение в публичный канал (если задан). Без ссылок-превью."""
+    if TG_TOKEN and TG_CHANNEL:
+        try:
+            S.post(f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
+                   json={"chat_id": TG_CHANNEL, "text": msg, "disable_web_page_preview": True}, timeout=10)
+        except Exception as e:
+            log(f"Channel error: {e}")
 
 
 def jget(url, params=None):
@@ -195,8 +237,9 @@ def espn_final(eid):
     if not comp["status"]["type"].get("completed"):
         return None
     t = {x["homeAway"]: x for x in comp["competitors"]}
-    return {t["home"]["team"]["shortDisplayName"]: int(t["home"]["score"]),
-            t["away"]["team"]["shortDisplayName"]: int(t["away"]["score"])}
+    # в summary у команды бывает только "name" без "shortDisplayName" — берём что есть
+    nm = lambda x: x["team"].get("shortDisplayName") or x["team"].get("name") or x["team"].get("displayName")
+    return {nm(t["home"]): int(t["home"]["score"]), nm(t["away"]): int(t["away"]["score"])}
 
 
 # ---------------------------------------------------------------- Polymarket
@@ -372,7 +415,8 @@ def check_take_profit(con, live_ids):
         if left is None:
             # в LIVE на покупке комиссия списывается акциями — берём реальный баланс
             left = live_shares(tok, shares * (1 - fee_ps / ask)) if LIVE else shares
-        if proceeds + left * net - cost < TP_PCT * cost:
+        tp = TENNIS_TP_PCT if str(eid).startswith("ten:") else TP_PCT
+        if tp <= 0 or proceeds + left * net - cost < tp * cost:
             continue
         sz = math.floor(min(left, bb["size"]) * 100) / 100
         if sz <= 0:
@@ -394,6 +438,9 @@ def check_take_profit(con, live_ids):
                            WHERE id=?""", (pnl, p, dt.datetime.now().isoformat(), proceeds, bid_id))
             msg = (f"💰 TP {'LIVE' if LIVE else 'PAPER'} {game}: {team} +{h} продано по {p:.2f} "
                    f"(вход {ask:.2f}). PnL {pnl:+.2f}$ ({pnl/cost:+.0%}). Банк ~{bankroll(con):.2f}$")
+            channel(f"💰 TAKE PROFIT (paper)\n{game}: {team}\n"
+                    f"Sold at {p:.2f} (entry {ask:.2f}) · {pnl/cost:+.0%} · {pnl:+.2f}$\n"
+                    f"Bankroll: ${bankroll(con):.2f}\n#paper #results")
         else:
             con.execute("UPDATE bets SET tp_price=?, tp_proceeds=?, shares_left=? WHERE id=?",
                         (p, proceeds, remaining, bid_id))
@@ -519,6 +566,16 @@ def handle_halftime(con, g):
            f"edge {best['edge']:+.1%}, {shares} акций, ${cost_total}")
     log(msg.replace("\n", " | "))
     tg(msg)
+    lim = min(0.97, best["ask"] + CHANNEL_ENTRY_SLACK)
+    side = "pre-game favourite" if best["seg"] == "fav" else "even pre-game"
+    bet = f"{best['team']} +{best['handicap']}" if best["handicap"] else f"{best['team']} to win"
+    channel(f"🏀 PAPER SIGNAL · NBA · halftime\n"
+            f"{game}: {best['team']} trail by {best['deficit']} ({side}, {best['pre_wp']:.0%} before tip-off)\n"
+            f"Bet: {bet}\n"
+            f"Price {best['ask']:.2f} (odds {1/best['ask']:.2f}) · max entry {lim:.2f}\n"
+            f"Historical estimate: {best['fair_pt']:.0%} · edge {best['edge']:+.1%}\n"
+            f"Size: 5% of bankroll (${cost_total:.2f})\n"
+            f"#paper #NBA #Polymarket")
     return "ставка"
 
 def settle(con):
@@ -535,12 +592,14 @@ def settle(con):
         else:
             try:
                 fin = espn_final(eid)
-            except Exception:
+            except Exception as ex:
+                log(f"Не смог рассчитать {game}: {ex}")
                 continue
             if not fin or team not in fin:
                 continue
             other = [v for k, v in fin.items() if k != team][0]
             win = fin[team] - other + h > 0
+            fin = " – ".join(f"{k} {v}" for k, v in fin.items())
         pnl_hold = round((shares if win else 0) - cost, 4)
         if pnl_done is not None:
             pnl = pnl_done
@@ -555,6 +614,16 @@ def settle(con):
         label = f"🎾 {team}" if str(eid).startswith("ten:") else f"{team} +{h}"
         msg = f"{'✅' if win else '❌'} {game}: {label} -> {fin}. PnL {pnl:+.2f}$.{extra} Банк ~{bankroll(con):.2f}$"
         log(msg); tg(msg)
+        fin_en = ("won the match" if win else "lost the match") if str(eid).startswith("ten:") else \
+            ("covered" if win else "did not cover") + f" (final {fin})"
+        label_en = f"🎾 {team}" if str(eid).startswith("ten:") else (f"{team} +{h}" if h else f"{team} to win")
+        if pnl_done is None:   # если был TP — результат уже опубликован в момент продажи
+            channel(f"{'✅ WIN' if win else '❌ LOSS'} (paper)\n{game}: {label_en} → {fin_en}\n"
+                    f"{pnl:+.2f}$ ({pnl/cost:+.0%}) · bankroll ${bankroll(con):.2f}\n#paper #results")
+        else:
+            channel(f"ℹ️ FINAL: {game} — {label_en} → {fin_en}\n"
+                    f"We exited early via take-profit ({pnl_done:+.2f}$); holding would have been {pnl_hold:+.2f}$\n"
+                    f"#paper #results")
 
 # ---------------------------------------------------------------- теннис
 def tennis_events():
@@ -571,15 +640,19 @@ def tennis_events():
                 if not ml or not s1 or ml.get("closed") or not ml.get("gameStartTime"):
                     continue
                 tourn = ml["question"].split(":")[0]
-                if any(x in tourn for x in ("Qualification", "Juniors", "Doubles")):
+                full_q = (e.get("title") or "") + " " + ml["question"] + " " + (e.get("slug") or "")
+                if any(x.lower() in full_q.lower() for x in TENNIS_EXCLUDE):
                     continue
                 if any(b in tourn for b in TENNIS_BIG):
                     level = "big"
-                elif any(b in tourn for b in TENNIS_500):
+                elif any(b in tourn for b in TENNIS_500.get(sid, [])):
                     level = "500"
+                elif any(b in tourn for b in TENNIS_250.get(sid, [])):
+                    level = "250"
                 else:
                     level = "other"
-                if TENNIS_BIG_ONLY and not (level == "big" or (level == "500" and TENNIS_INCLUDE_500)):
+                if TENNIS_BIG_ONLY and not (level == "big" or (level == "500" and TENNIS_INCLUDE_500)
+                                            or (level == "250" and TENNIS_INCLUDE_250)):
                     continue
                 start = dt.datetime.fromisoformat(ml["gameStartTime"].replace(" ", "T").replace("+00", "+00:00"))
                 if start > now:
@@ -659,14 +732,51 @@ def handle_tennis(con, t):
         VALUES(?,?,?,?,?,?,0,0,?,?,?,NULL,NULL,NULL,NULL,?,?,?,?,?,?,'tennis')""",
         (dt.datetime.now().isoformat(), day, "ten:" + t["slug"], t["title"], player, ml["question"],
          pre, p, fee_ps, shares, cost_total, mode, resp, json.dumps(meta),
-         "tennis_dog" if t["level"] == "big" else "tennis_dog500"))
+         {"big": "tennis_dog", "500": "tennis_dog500", "250": "tennis_dog250"}.get(t["level"], "tennis_dog_other")))
     con.commit()
-    lvl = {"big": "крупный турнир", "500": "турнир 500"}.get(t["level"], "другой турнир")
+    lvl = {"big": "крупный турнир", "500": "турнир 500", "250": "турнир 250"}.get(t["level"], "другой турнир")
     msg = (f"🎾 {'🟢 LIVE' if mode == 'live' else '📝 PAPER'} {t['title']} ({lvl})\n"
            f"{player} — андердог (до матча {pre:.0%}) взял 1-й сет\n"
            f"победа в матче: ask {p:.2f} (кэф ~{1/p:.2f}), {shares} акций, ${cost_total}")
     log(msg.replace("\n", " | ")); tg(msg)
+    opp = next((o for i, o in enumerate(outs) if i != idx), "opponent")
+    lim = min(TENNIS_MAX_ASK, p + CHANNEL_ENTRY_SLACK)
+    lvl_en = {"big": "Slam/1000", "500": "500", "250": "250"}.get(t["level"], "other")
+    channel(f"🎾 PAPER SIGNAL · {t['tourn']} ({lvl_en})\n"
+            f"Underdog {player} ({pre:.0%} pre-match) took set 1 vs {opp}\n"
+            f"Bet: {player} to win the match\n"
+            f"Price {p:.2f} (odds {1/p:.2f}) · max entry {lim:.2f}\n"
+            f"Size: 5% of bankroll (${cost_total:.2f})\n"
+            f"#paper #tennis #Polymarket")
     return "ставка"
+
+_last_summary_day = None
+def channel_summary_tick(con):
+    """Раз в день — сводка в канал: вчера и всё время, по сегментам."""
+    global _last_summary_day
+    if not TG_CHANNEL:
+        return
+    now = dt.datetime.now(dt.timezone.utc)
+    if now.hour != CHANNEL_SUMMARY_HOUR or _last_summary_day == now.date():
+        return
+    _last_summary_day = now.date()
+    df = pd.read_sql("SELECT * FROM bets WHERE pnl IS NOT NULL", con)
+    if df.empty:
+        return
+    y = (now.date() - dt.timedelta(days=1)).isoformat()
+    names = {"eq": "NBA · even teams", "fav": "NBA · favourites", "tennis_dog": "Tennis · Slams/1000",
+             "tennis_dog500": "Tennis · 500", "tennis_dog250": "Tennis · 250"}
+    def line(x):
+        return f"{len(x)} bets, {(x.pnl > 0).sum()} winners, {x.pnl.sum():+.2f}$ (ROI {x.pnl.sum() / x.cost.sum():+.1%})"
+    yd = df[df.day == y]
+    parts = [f"📊 Daily paper report · {y}", (line(yd) if len(yd) else "no bets yesterday"), "",
+             f"All time: {line(df)}", f"Bankroll: ${bankroll(con):.2f} (start ${START_BANKROLL:.0f})"]
+    for sg, x in df.groupby(df.seg.fillna("?")):
+        parts.append(f"• {names.get(sg, sg)}: {line(x)}")
+    parts += ["", "Paper trading: real Polymarket prices, no real money. Not financial advice.",
+              "#paper #stats #Polymarket"]
+    channel("\n".join(parts))
+
 
 _last_tennis = 0.0
 def tennis_tick(con):
@@ -697,7 +807,7 @@ def run():
             games = [parse_espn(e) for e in espn_games()]
             live_ids = {g["id"] for g in games if g["state"] == "in"}
             for g in games:
-                if is_halftime(g) and not con.execute("SELECT 1 FROM seen WHERE espn_id=?", (g["id"],)).fetchone():
+                if NBA_ENABLED and is_halftime(g) and not con.execute("SELECT 1 FROM seen WHERE espn_id=?", (g["id"],)).fetchone():
                     note = handle_halftime(con, g)
                     log(f"  -> {note}")
                     if note.startswith("ошибка"):
@@ -710,6 +820,10 @@ def run():
                 log(f"Ошибка тенниса: {ex}")
             check_take_profit(con, live_ids)
             settle(con)
+            try:
+                channel_summary_tick(con)
+            except Exception as ex:
+                log(f"Ошибка сводки: {ex}")
         except Exception as ex:
             log(f"Ошибка цикла: {ex}")
         time.sleep(POLL_SEC)
@@ -731,7 +845,8 @@ def report():
         if "seg" in st and st.seg.notna().any():
             for sg, x in st.groupby("seg"):
                 nm = {"eq": "НБА равные", "fav": "НБА фавориты", "tennis_dog": "теннис (Шлемы/1000): андердог взял 1-й сет",
-                      "tennis_dog500": "теннис (500): андердог взял 1-й сет"}.get(sg, sg)
+                      "tennis_dog500": "теннис (500): андердог взял 1-й сет",
+                      "tennis_dog250": "теннис (250): андердог взял 1-й сет"}.get(sg, sg)
                 print(f"  [{nm}] ставок {len(x)}, побед {(x.pnl_hold > 0).sum()}"
                       + (f" (ожид. {x.fair_pt.sum():.1f})" if x.fair_pt.notna().any() else "") + ", "
                               f"PnL {x.pnl.sum():+.2f}$ (ROI {x.pnl.sum()/x.cost.sum():+.1%})")
